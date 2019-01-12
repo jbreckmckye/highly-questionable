@@ -1,39 +1,77 @@
 export abstract class Perhaps<T> {
     abstract catch(handler: (err: Error) => T): Perhaps<T>
 
+    abstract isNothing(): this is None;
+
+    abstract isProblem(): this is Problem;
+
+    abstract isSomething(): this is Something<T>
+
     abstract map<U=T>(mapper: (input: T) => Perhaps<U> | U): Perhaps<U>
 
     abstract or(alt: T): Perhaps<T>
 
     abstract orFrom(fn: ()=> T | never): Perhaps<T>
 
-    abstract peek(): any
+    abstract pass(fn: (input: T) => any): Perhaps<T>
+
+    abstract peek(): T | null | Error
 
     abstract unwrap(): T | null
 
-    abstract unwrapOr(alt: T): T | null
+    abstract unwrapOr(alt: T): T
 
     abstract unwrapOrThrow(err: Error): T | never
 
-    static of<T>(input: any): Perhaps<T> {
-        if (input === Nothing) {
+    static junction<U>(...args: Array<Perhaps<U>|Function>): Perhaps<U> {
+        const join = args.pop() as Function;
+        const maybes = args as Array<Perhaps<U>>;
+        const joinInputs: Array<U> = [];        
+
+        for (let i = 0; i < maybes.length; i++) {
+            const maybe = maybes[i];
+
+            if (maybe.isSomething()) {
+                joinInputs.push(maybe.unwrap());
+
+            } else if (maybe.isProblem()) {
+                return maybe;
+            
+            } else if (maybe.isNothing()) {
+                return maybe;
+
+            } else {
+                throw new Error('Illegal junction parameter');
+            }
+        }
+
+        try {
+            const result = join(...joinInputs);
+            return Perhaps.of(result);
+        } catch (err) {
+            return Problem.of(err);
+        }
+    }
+
+    static of<U>(input: any): Perhaps<U> {
+        if (input instanceof None) {
             return input;
 
         } else if (input instanceof Problem) {
             return input;
 
         } else if (input instanceof Something) {
-            return input as Perhaps<T>;
+            return input as Perhaps<U>;
 
         } else if (isEmpty(input)) {
-            return Nothing as Perhaps<T>;
+            return Nothing as Perhaps<U>;
 
         } else {
-            return new Something<T>(input);
+            return new Something<U>(input);
         }
     }
 
-    static from<T>(fn: ()=> T): Perhaps<T> {
+    static from<U>(fn: ()=> U): Perhaps<U> {
         try {
             const value = fn();
             return Perhaps.of(value);
@@ -52,35 +90,51 @@ export class None extends Perhaps<any> {
         return Nothing;
     }
 
-    catch(handler: any) {
+    public catch(handler: any) {
         return Nothing;
     }
 
-    map(mapper: any) {
+    public isNothing() {
+        return true;
+    }
+
+    public isProblem() {
+        return false;
+    }
+
+    public isSomething() {
+        return false;
+    }
+
+    public map(mapper: any): None {
         return Nothing;
     }
 
-    or<U>(alt: U): Perhaps<U> {
+    public or<U>(alt: U): Perhaps<U> {
         return Perhaps.of(alt);
     }
 
-    orFrom<U>(fn: ()=> U | never) {
+    public orFrom<U>(fn: ()=> U | never) {
         return Perhaps.from(fn);
     }
 
-    peek() {
+    public pass(fn: any) {
+        return Nothing;
+    }
+
+    public peek(): null {
         return null;
     }
 
-    unwrap() {
+    public unwrap(): null {
         return null;
     }
 
-    unwrapOr<T>(alt: T) {
-        return isEmpty(alt) ? null : alt;
+    public unwrapOr<T>(alt: T): T {
+        return alt;
     }
 
-    unwrapOrThrow(err: Error): never {
+    public unwrapOrThrow(err: Error): never {
         throw err;
     }
 }
@@ -112,6 +166,18 @@ export class Problem implements Perhaps<any> {
         return Perhaps.of(result);
     }
 
+    public isNothing() {
+        return false;
+    }
+
+    public isProblem() {
+        return true;
+    }
+
+    public isSomething() {
+        return false;
+    }
+
     public map() {
         return this;
     }
@@ -124,7 +190,11 @@ export class Problem implements Perhaps<any> {
         return Perhaps.from(fn);
     }
 
-    public peek() {
+    public pass(fn: any) {
+        return this;
+    }
+
+    public peek(): Error {
         return this.err;
     }
 
@@ -132,7 +202,7 @@ export class Problem implements Perhaps<any> {
         throw this.err;
     }
 
-    public unwrapOr<T>(alt: T) {
+    public unwrapOr<T>(alt: T): T {
         return alt;
     }
 
@@ -152,6 +222,18 @@ export class Something<T> implements Perhaps<T> {
         return this;
     }
 
+    public isNothing() {
+        return false;
+    }
+
+    public isProblem() {
+        return false;
+    }
+
+    public isSomething() {
+        return true;
+    }
+
     public map<U>(mapper: (input: T) => Perhaps<U> | U): Perhaps<U> {
         try {
             const result = mapper(this.value);
@@ -169,19 +251,28 @@ export class Something<T> implements Perhaps<T> {
         return this;
     }
 
-    public peek() {
+    public pass(fn: (input: T) => any) {
+        try {
+            fn(this.value);
+            return this;
+        } catch (err) {
+            return Problem.of(err);
+        }
+    }
+
+    public peek(): T {
         return this.value;
     }
 
-    public unwrap() {
+    public unwrap(): T {
         return this.value;
     }
 
-    public unwrapOr() {
+    public unwrapOr(): T {
         return this.value;
     }
 
-    public unwrapOrThrow() {
+    public unwrapOrThrow(): T {
         return this.value;
     }
 }
@@ -190,5 +281,5 @@ function isEmpty(val: any) {
     return val === null
         || val === undefined
         || val === ''
-        || isNaN(val);
+        || (typeof val == 'number' && isNaN(val));
 }

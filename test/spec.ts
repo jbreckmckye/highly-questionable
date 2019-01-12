@@ -1,5 +1,90 @@
 import {Perhaps, None, Nothing, Problem, Something} from '../src';
 
+describe('Perhaps', ()=> {
+    describe('Perhaps.of', ()=> {
+        test('nonempty values produce Something', ()=> {
+            expect(Perhaps.of(123)).toBeInstanceOf(Something);
+        });
+
+        test('nulls produce Nothing', ()=> {
+            expect(Perhaps.of(null)).toBe(Nothing);
+        });
+
+        test('undefineds produce Nothing', ()=> {
+            expect(Perhaps.of(undefined)).toBe(Nothing);
+        });
+
+        test('empty strings produce Nothing', ()=> {
+            expect(Perhaps.of('')).toBe(Nothing);
+        });
+
+        test('errors produce Somethings wrapping Errors, not Problems', ()=> {
+            expect(Perhaps.of(new Error)).toBeInstanceOf(Something);
+        });
+    });
+
+    describe('Perhaps.from', ()=> {
+        test('given function returning nonempty value, produces Something', ()=> {
+            const fn = ()=> 123;
+            expect(Perhaps.from(fn)).toBeInstanceOf(Something);
+        });
+
+        test('given function returning nulls, produces Something', ()=> {
+            const fn = ()=> null;
+            expect(Perhaps.from(fn)).toBe(Nothing);
+        });
+
+        test('given function returning undefineds, produces Something', ()=> {
+            const fn = ()=> undefined;
+            expect(Perhaps.from(fn)).toBe(Nothing);
+        });
+
+        test('given function returning empty string, produces Something', ()=> {
+            const fn = ()=> '';
+            expect(Perhaps.from(fn)).toBe(Nothing);
+        });
+
+        test('given function *returning* Errors, produces a Something wrapping an Error, not a Problem', ()=> {
+            const fn = ()=> new Error;
+            expect(Perhaps.from(fn)).toBeInstanceOf(Something);
+        });
+
+        test('given function that throws, produces Problem', ()=> {
+            const fn = ()=> {throw new Error}
+            expect(Perhaps.from(fn)).toBeInstanceOf(Problem);
+        });
+    });
+
+    describe('Perhaps.junction', ()=> {
+        const one = Perhaps.of(1);
+        const two = Perhaps.of(2);
+        const adder = (a: number, b: number) => a + b;
+        const problem = Problem.of(new Error);
+
+        test('if an initial parameter is Nothing, returns Nothing', ()=> {
+            const result = Perhaps.junction(Nothing, one, two, adder);
+            expect(result).toBe(Nothing);
+        });
+
+        test('if an initial parameter is a Problem, returns Problem', ()=> {
+            const result = Perhaps.junction(one, two, problem, adder);
+            expect(result).toBe(problem);
+        });
+
+        test('if all initial parameters are Something, passes to join function and wraps the result', ()=> {
+            const result = Perhaps.junction(one, two, adder);
+            expect(result.unwrap()).toBe(3);
+        });
+
+        test('if join function throws error, wrap that error as a Problem', ()=> {
+            const result = Perhaps.junction(one, two, ()=> {
+                throw new Error;
+            });
+            expect(result).toBeInstanceOf(Problem);
+        });
+    });
+})
+
 describe('Nothing', ()=> {
     describe('catch', ()=> {
         const handler = jest.fn();
@@ -14,23 +99,19 @@ describe('Nothing', ()=> {
         });
     });
 
-    describe('flatmap', ()=> {
-        const mapper = jest.fn();
-        const result = Nothing.flatMap(mapper);
-
-        test('mapper is not invoked', ()=> {            
-            expect(mapper).not.toHaveBeenCalled();
+    describe('is-checks', ()=> {
+        test('is nothing', ()=> {
+            expect(Nothing.isNothing()).toBe(true);
         });
 
-        test('returns Nothing again', ()=> {
-            // "Nothing will come of nothing. Speak again" - King Lear
-            expect(result).toBe(Nothing);
+        test('is not a error', ()=> {
+            expect(Nothing.isProblem()).toBe(false)
         });
-    });
+    })
 
     describe('map', ()=> {
         const mapper = jest.fn();
-        const result = Nothing.flatMap(mapper);
+        const result = Nothing.map(mapper);
 
         test('mapper is not invoked', ()=> {            
             expect(mapper).not.toHaveBeenCalled();
@@ -88,12 +169,8 @@ describe('Nothing', ()=> {
     });
 
     describe('unwrapOr', ()=> {
-        test('if alt value nonempty, returns alt', ()=> {
+        test('returns alt value', ()=> {
             expect(Nothing.unwrapOr(456)).toBe(456);
-        });
-
-        test('if alt value empty, returns null, even if alt a different empty kind', ()=> {
-            expect(Nothing.unwrapOr('')).toBe(null);
         });
     });
 
