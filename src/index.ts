@@ -1,4 +1,4 @@
-interface IPerhaps<T> {
+export interface IPerhaps<T> {
     catch(handler: (err: Error) => T): IPerhaps<T>,
     flatMap<U=T>(mapper: (input: T) => IPerhaps<U> | U): IPerhaps<U>,
     map<U=T>(mapper: (input: T) => U): IPerhaps<U>,
@@ -9,6 +9,35 @@ interface IPerhaps<T> {
     unwrapOr(alt: T): T,
     unwrapOrThrow(err: Error): T | never
 }
+
+export const Perhaps = {
+    of<T>(input: any): IPerhaps<T> {
+        if (input === Nothing) {
+            return input;
+
+        } else if (input instanceof Problem) {
+            return input;
+
+        } else if (input instanceof Something) {
+            return input as IPerhaps<T>;
+
+        } else if (isEmpty(input)) {
+            return Nothing as IPerhaps<T>;
+
+        } else {
+            return new Something<T>(input);
+        }
+    },
+
+    from<T>(fn: ()=> T): IPerhaps<T> {
+        try {
+            const value = fn();
+            return Perhaps.of(value);
+        } catch (err) {
+            return Problem.of(err);
+        }
+    }
+};
 
 export const Nothing: IPerhaps<any> = {
     catch() {
@@ -106,40 +135,14 @@ export class Problem implements IPerhaps<any> {
     }
 }
 
-class Perhaps<T> implements IPerhaps<T> {
+class Something<T> implements IPerhaps<T> {
     private value: T;
 
     constructor(input: T) {
         this.value = input;
     }
 
-    static of<T>(input: any): IPerhaps<T> {
-        if (input === Nothing) {
-            return input;
-
-        } else if (input instanceof Problem) {
-            return input;
-
-        } else if (input instanceof Perhaps) {
-            return input as IPerhaps<T>;
-
-        } else if (isEmpty(input)) {
-            return Nothing as IPerhaps<T>;
-
-        } else {
-            return new Perhaps<T>(input);
-        }
-    }
-
-    static from<T>(fn: ()=> T) {
-        try {
-            return Perhaps.of(fn());
-        } catch (err) {
-            return Problem.of(err);
-        }
-    }
-
-    public catch(handler: (err: Error) => T) {
+    public catch(handler: any) {
         return this as IPerhaps<T>;
     }
 
@@ -152,14 +155,10 @@ class Perhaps<T> implements IPerhaps<T> {
         }
     }
 
-    public map<U>(mapper: (input: T) => U) {
+    public map<U>(mapper: (input: T) => U): IPerhaps<U> {
         try {
             const result = mapper(this.value);
-            if (isEmpty(result)) {
-                return Nothing;
-            } else {
-                return new Perhaps(result);
-            }
+            return Perhaps.of(result);
         } catch (err) {
             return Problem.of(err);
         }
