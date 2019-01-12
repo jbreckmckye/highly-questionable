@@ -1,9 +1,7 @@
 export abstract class Perhaps<T> {
     abstract catch(handler: (err: Error) => T): Perhaps<T>
 
-    abstract flatMap<U=T>(mapper: (input: T) => Perhaps<U> | U): Perhaps<U>
-
-    abstract map<U=T>(mapper: (input: T) => U): Perhaps<U>
+    abstract map<U=T>(mapper: (input: T) => Perhaps<U> | U): Perhaps<U>
 
     abstract or(alt: T): Perhaps<T>
 
@@ -58,13 +56,8 @@ export class None extends Perhaps<any> {
         return Nothing;
     }
 
-    flatMap(mapper: any) {
+    map(mapper: any) {
         return Nothing;
-    }
-
-    map<U>(mapper: (input: any) => U): Perhaps<U> {
-        const result = mapper(null);
-        return Perhaps.of(result);
     }
 
     or<U>(alt: U): Perhaps<U> {
@@ -119,10 +112,6 @@ export class Problem implements Perhaps<any> {
         return Perhaps.of(result);
     }
 
-    public flatMap() {
-        return this;
-    }
-
     public map() {
         return this;
     }
@@ -163,16 +152,7 @@ export class Something<T> implements Perhaps<T> {
         return this;
     }
 
-    public flatMap<U>(mapper: (input: T) => Perhaps<U> | U): Perhaps<U> {
-        try {
-            const result = mapper(this.value);
-            return Perhaps.of(result);
-        } catch (err) {
-            return Problem.of(err);
-        }
-    }
-
-    public map<U>(mapper: (input: T) => U): Perhaps<U> {
+    public map<U>(mapper: (input: T) => Perhaps<U> | U): Perhaps<U> {
         try {
             const result = mapper(this.value);
             return Perhaps.of(result);
