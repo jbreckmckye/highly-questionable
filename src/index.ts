@@ -11,9 +11,9 @@ export abstract class Perhaps<T> {
 
     abstract peek(): any
 
-    abstract unwrap(): T
+    abstract unwrap(): T | null
 
-    abstract unwrapOr(alt: T): T
+    abstract unwrapOr(alt: T): T | null
 
     abstract unwrapOrThrow(err: Error): T | never
 
@@ -54,11 +54,11 @@ export class None extends Perhaps<any> {
         return Nothing;
     }
 
-    catch() {
+    catch(handler: any) {
         return Nothing;
     }
 
-    flatMap() {
+    flatMap(mapper: any) {
         return Nothing;
     }
 
@@ -84,7 +84,7 @@ export class None extends Perhaps<any> {
     }
 
     unwrapOr<T>(alt: T) {
-        return alt;
+        return isEmpty(alt) ? null : alt;
     }
 
     unwrapOrThrow(err: Error): never {
@@ -152,15 +152,15 @@ export class Problem implements Perhaps<any> {
     }
 }
 
-class Something<T> implements Perhaps<T> {
+export class Something<T> implements Perhaps<T> {
     private value: T;
 
     constructor(input: T) {
         this.value = input;
     }
 
-    public catch(handler: any) {
-        return this as Perhaps<T>;
+    public catch() {
+        return this;
     }
 
     public flatMap<U>(mapper: (input: T) => Perhaps<U> | U): Perhaps<U> {
