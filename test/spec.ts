@@ -183,5 +183,4 @@ describe('Nothing', ()=> {
             expect(action).toThrow(exc);
         });
     });
-
-})
+});

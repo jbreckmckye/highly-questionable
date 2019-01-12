@@ -278,8 +278,20 @@ export class Something<T> implements Perhaps<T> {
 }
 
 function isEmpty(val: any) {
-    return val === null
-        || val === undefined
-        || val === ''
-        || (typeof val == 'number' && isNaN(val));
+    switch(typeof val) {
+        case 'undefined':
+            return true;
+
+        case 'object':
+            return val === null;
+
+        case 'string':
+            return val.length === 0;
+
+        case 'number':
+            return isNaN(val);
+            
+        default:
+            return false;
+    }
 }
