@@ -1,6 +1,8 @@
 export abstract class Perhaps<T> {
     abstract catch(handler: (err: Error) => T): Perhaps<T>
 
+    abstract forOne(fn: (input: T) => any): Perhaps<T>
+
     abstract isNothing(): this is None;
 
     abstract isProblem(): this is Problem;
@@ -12,8 +14,6 @@ export abstract class Perhaps<T> {
     abstract or(alt: T): Perhaps<T>
 
     abstract orFrom(fn: ()=> T | never): Perhaps<T>
-
-    abstract pass(fn: (input: T) => any): Perhaps<T>
 
     abstract peek(): T | null | Error
 
@@ -86,11 +86,15 @@ export class None extends Perhaps<any> {
         return Nothing;
     }
 
-    static from(fn: ()=> any) {
+    static from(fn: any) {
         return Nothing;
     }
 
     public catch(handler: any) {
+        return Nothing;
+    }
+
+    public forOne(fn: any) {
         return Nothing;
     }
 
@@ -106,7 +110,7 @@ export class None extends Perhaps<any> {
         return false;
     }
 
-    public map(mapper: any): None {
+    public map(fn: any): None {
         return Nothing;
     }
 
@@ -116,10 +120,6 @@ export class None extends Perhaps<any> {
 
     public orFrom<U>(fn: ()=> U | never) {
         return Perhaps.from(fn);
-    }
-
-    public pass(fn: any) {
-        return Nothing;
     }
 
     public peek(): null {
@@ -153,17 +153,15 @@ export class Problem implements Perhaps<any> {
     }
 
     static from(fn: ()=> Error) {
-        try {
-            const result = fn();
-            return new Problem(result);
-        } catch (err) {
-            return new Problem(err);
-        }
+        return new Problem(fn());
     }
 
     public catch<T>(handler: (err: Error) => T): Perhaps<T> {
-        const result = handler(this.err);
-        return Perhaps.of(result);
+        return Perhaps.from(()=> handler(this.err));
+    }
+
+    public forOne(fn: any) {
+        return this;
     }
 
     public isNothing() {
@@ -178,7 +176,7 @@ export class Problem implements Perhaps<any> {
         return false;
     }
 
-    public map() {
+    public map(fn: any) {
         return this;
     }
 
@@ -188,10 +186,6 @@ export class Problem implements Perhaps<any> {
 
     public orFrom<U>(fn: ()=> U | never) {
         return Perhaps.from(fn);
-    }
-
-    public pass(fn: any) {
-        return this;
     }
 
     public peek(): Error {
@@ -222,6 +216,15 @@ export class Something<T> implements Perhaps<T> {
         return this;
     }
 
+    public forOne(fn: (input: T) => any) {
+        try {
+            fn(this.value);
+            return this;
+        } catch (err) {
+            return Problem.of(err);
+        }
+    }
+
     public isNothing() {
         return false;
     }
@@ -249,15 +252,6 @@ export class Something<T> implements Perhaps<T> {
 
     public orFrom() {
         return this;
-    }
-
-    public pass(fn: (input: T) => any) {
-        try {
-            fn(this.value);
-            return this;
-        } catch (err) {
-            return Problem.of(err);
-        }
     }
 
     public peek(): T {

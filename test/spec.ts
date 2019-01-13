@@ -99,6 +99,14 @@ describe('Nothing', ()=> {
         });
     });
 
+    describe('forOne', ()=> {
+        test('does not invoke function', ()=> {
+            const fn = jest.fn();
+            Nothing.forOne(fn);
+            expect(fn).not.toHaveBeenCalled();
+        });
+    });
+
     describe('is-checks', ()=> {
         test('is nothing', ()=> {
             expect(Nothing.isNothing()).toBe(true);
@@ -106,6 +114,10 @@ describe('Nothing', ()=> {
 
         test('is not a error', ()=> {
             expect(Nothing.isProblem()).toBe(false)
+        });
+
+        test('is not a something', ()=> {
+            expect(Nothing.isSomething()).toBe(false);
         });
     })
 
@@ -143,6 +155,11 @@ describe('Nothing', ()=> {
             const fn = jest.fn();
             fn.mockImplementation(()=> 345);
             expect(Nothing.orFrom(fn)).toBeInstanceOf(Something);
+        });
+
+        test('if passed function throws exception, return Problem', ()=> {
+            const fn = ()=> {throw new Error};
+            expect(Nothing.orFrom(fn)).toBeInstanceOf(Problem);
         });
     });
 
@@ -182,5 +199,133 @@ describe('Nothing', ()=> {
             };
             expect(action).toThrow(exc);
         });
+    });
+});
+
+describe('Problem', ()=> {
+    const err = new Error;
+    const problem = Problem.of(err);
+
+    describe('Problem.of', ()=> {
+        test('wraps given error', ()=> {
+            const err = new Error();
+            const result = Problem.of(err);
+            expect(result).toBeInstanceOf(Problem);
+        });
+    });
+
+    describe('Problem.from', ()=> {
+        test('wraps error returned from function', ()=> {
+            const fn = ()=> new Error();
+            const result = Problem.from(fn);
+            expect(result).toBeInstanceOf(Problem);
+        });
+
+        test('will NOT handle error thrown by function', ()=> {
+            const fn = ()=> {throw new Error()};
+            const create = ()=> Problem.from(fn);
+            expect(create).toThrow();
+        });
+    });
+
+    describe('catch', ()=> {
+        test('passes error to the handler', ()=> {
+            const handler = jest.fn();
+            problem.catch(handler);
+            expect(handler).toHaveBeenCalledWith(err);
+        });
+
+        test('creates new Perhaps using handler response', ()=> {
+            const getSomething = ()=> 123;
+            const getNothing = ()=> null;
+            expect(problem.catch(getSomething)).toBeInstanceOf(Something);
+            expect(problem.catch(getNothing)).toBeInstanceOf(None);
+        });
+
+        test('handler may itself throw (or throw back original error) - should produce problem', ()=> {
+            const getErr = ()=> {throw err};
+            expect(problem.catch(getErr)).toBeInstanceOf(Problem);
+        });
+    });
+
+    describe('forOne', ()=> {
+        test('does not invoke function', ()=> {
+            const fn = jest.fn();
+            problem.forOne(fn);
+            expect(fn).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('is-checks', ()=> {
+        test('is not nothing', ()=> {
+            expect(problem.isNothing()).toBe(false);
+        });
+
+        test('is not something', ()=> {
+            expect(problem.isSomething()).toBe(false);
+        });
+
+        test('is a problem', ()=> {
+            expect(problem.isProblem()).toBe(true);
+        });
+    });
+
+    describe('map', ()=> {
+        const mapper = jest.fn();
+        const result = problem.map(mapper);
+
+        test('mapper is not called', ()=> {            
+            expect(mapper).not.toHaveBeenCalled();
+        });
+
+        test('returns the original problem', ()=> {
+            expect(result).toBeInstanceOf(Problem);
+        });
+    });
+
+    describe('or', ()=> {
+        test('empty input returns Nothing', ()=> {
+            expect(problem.or(null)).toBe(Nothing);
+        });
+        
+        test('nonempty input returns Something', ()=> {
+            expect(problem.or(123)).toBeInstanceOf(Something);
+        });
+    });
+
+    describe('orFrom', ()=> {
+        test('if passed function produces empty result, returns Nothing', ()=> {
+            const fn = ()=> null;
+            expect(problem.orFrom(fn)).toBe(Nothing);
+        });
+
+        test('if passed function produces non-empty result, returns Something', ()=> {
+            const fn = ()=> 345;
+            expect(problem.orFrom(fn)).toBeInstanceOf(Something);
+        });
+
+        test('if passed function throws exception, return Problem', ()=> {
+            const fn = ()=> {throw new Error};
+            expect(problem.orFrom(fn)).toBeInstanceOf(Problem);
+        });
+    });
+
+    test('peek returns wrapped error', ()=> {
+        expect(problem.peek()).toBe(err);
+    });
+
+    test('unwrap throws wrapped error', ()=> {
+        const unwrap = ()=> problem.unwrap();
+        expect(unwrap).toThrow(err);
+    });
+
+    test('unwrapOr returns alternate value', ()=> {
+        expect(problem.unwrapOr(123)).toBe(123);
+    });
+
+    test('unwrapOrThrow throws alternate exception', ()=> {
+        const altError = new Error;
+        const action = ()=> problem.unwrapOrThrow(altError);
+        expect(action).toThrow(altError);
     });
 });
