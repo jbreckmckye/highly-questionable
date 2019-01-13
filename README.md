@@ -9,6 +9,8 @@ If you're familiar with monads, `Perhaps` is heavily inspired by a combination o
 If not, the best way to describe `Perhaps` is just to show some code:
 
 ```typescript
+import {Perhaps, Nothing} from 'highly-questionable';
+
 // 1. Wrap a value, null or undefined in Perhaps
 const maybeNumber: Perhaps<number> = Perhaps.of(someInput);
 
