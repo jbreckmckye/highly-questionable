@@ -47,19 +47,22 @@ maybeDouble.unwrapOrThrow(new Error('The number does not exist'));
 // Something          | number
 // Problem            | throws original error 
 
-if (maybeQuadruple.isSomething()) {
+if (maybeDouble.isSomething()) {
     // Only true if contents valid
-    // TypeScript will infer that maybeQuadruple.unwrap() cannot be null
+    return maybeDouble.unwrap(); // TypeScript will infer that this cannot be null
 }
 
 if (maybeQuadruple.isNothing()) {
     // Only true if contents empty
+    // Equivalent to maybeDouble === Nothing
+}
+
+if (maybeQuadruple.isProblem()) {
+    // Only true if contents erroneous
 }
 ```
 
 I recommend taking a look at the 'Tour of Features', below.
-
-
 
 ## Setup
 
