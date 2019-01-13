@@ -329,3 +329,111 @@ describe('Problem', ()=> {
         expect(action).toThrow(altError);
     });
 });
+
+describe('Something', ()=> {
+    const something = Perhaps.of(123);
+    
+    describe('catch', ()=> {
+        test('returns the something', ()=> {
+            const handler = jest.fn();
+            expect(something.catch(handler)).toBe(something);
+        });
+    });
+
+    describe('forOne', ()=> {
+        const handler = jest.fn();
+        handler.mockImplementation((input: number) => input + 1);
+
+        const result = something.forOne(handler);
+
+        test('calls handler with inner value', ()=> {            
+            expect(handler).toHaveBeenCalledWith(123);
+        });
+
+        test('returns same something, unchanged', ()=> {
+            expect(result).toBeInstanceOf(Something);
+            expect(result.peek()).toBe(123);
+        });
+    });
+
+    describe('is-checks', ()=> {
+        test('is not nothing', ()=> {
+            expect(something.isNothing()).toBe(false);
+        });
+
+        test('is something', ()=> {
+            expect(something.isSomething()).toBe(true);
+        });
+
+        test('is not a problem', ()=> {
+            expect(something.isProblem()).toBe(false);
+        });
+    });
+
+    describe('map', ()=> {
+        const start = Perhaps.of(123);
+
+        const mapper = jest.fn();
+        mapper.mockImplementation((input: number) => input + 1);
+
+        const end = something.map(mapper);
+
+        test('mapper is called with wrapped value', ()=> {            
+            expect(mapper).toHaveBeenCalledWith(123);
+        });
+
+        test('returns a new something', ()=> {
+            expect(end).toBeInstanceOf(Something);
+            expect(end).not.toBe(start);
+        });
+
+        test('new something wraps result of map function', ()=> {
+            expect(end.unwrap()).toBe(124);
+        });
+    });
+
+    describe('or', ()=> {
+        const start = Perhaps.of(123);
+            const end = start.or(456);
+
+        test('input disregarded and original returned', ()=> {
+            expect(end).toBe(start);
+            expect(end.unwrap()).toBe(123);
+        });
+    });
+
+    describe('orFrom', ()=> {
+        const start = Perhaps.of(123);
+
+        const altFn = jest.fn();
+        altFn.mockImplementation(()=> 456);
+
+        const end = start.orFrom(altFn);
+
+        test('original returned unchanged', ()=> {
+            expect(end).toBe(start);
+            expect(end.unwrap()).toBe(123);
+        });
+
+        test('altFn is not called', ()=> {
+            expect(altFn).not.toHaveBeenCalled();
+        });
+    });
+
+    test('peek returns wrapped value', ()=> {
+        expect(something.peek()).toBe(123);
+    });
+
+    test('unwrap returns wrapped value', ()=> {
+        expect(something.unwrap()).toBe(123);
+    });
+
+    test('unwrapOr returns original value', ()=> {
+        expect(something.unwrapOr(456)).toBe(123);
+    });
+
+    test('unwrapOrThrow returns original value', ()=> {
+        const result = something.unwrapOrThrow(new Error);
+        expect(result).toBe(123);
+    });
+});
