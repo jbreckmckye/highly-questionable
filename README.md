@@ -4,7 +4,9 @@ A TypeScript / JavaScript library for paranoid developers.
 
 Highly Questionable allows you to safely and elegantly handle values that might be null, undefined or Errors, without writing tedious null checks or try-catches everywhere.
 
-The core concept is simple:
+If you're familiar with monads, `Perhaps` is heavily inspired by a combination of `Maybe/Option` and `Result`.
+
+If not, the best way to describe `Perhaps` is just to show some code:
 
 ```typescript
 // 1. Wrap a value, null or undefined in Perhaps
@@ -12,7 +14,7 @@ const maybeNumber: Perhaps<number> = Perhaps.of(someInput);
 
 // maybeNumber might a Something<number> or a Nothing. Both are represented by the type Perhaps<number>
 
-// 2. Pass a mapping function
+// 2. Pass a mapping function.
 const maybeDouble = maybeNumber.map(double);
 
 // 3. The function is only used if someInput was not null / undefined
@@ -57,7 +59,7 @@ if (maybeQuadruple.isNothing()) {
 
 I recommend taking a look at the 'Tour of Features', below.
 
-If you're familiar with monads, `Perhaps` is heavily inspired by a combination of `Maybe/Option` and `Result`.
+
 
 ## Setup
 
