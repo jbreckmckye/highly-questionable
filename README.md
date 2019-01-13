@@ -6,35 +6,48 @@ Highly Questionable allows you to safely and elegantly handle values that might 
 
 The core concept is simple:
 
-1. You wrap a value, null, undefined or error in a `Perhaps`
-2. You pass in 'mapping' functions, which only need to work with non-empty, non-error values
-3. If the value exists / is not an error, it is applied to the operator
-4. The resulting value / null / error comes back wrapped in a new `Perhaps`
-5. When you need the inner value, call one of the unwrap methods, or a type-guard method
-
-In code:
-
 ```typescript
 // 1. Wrap a value, null or undefined in Perhaps
 const maybeNumber: Perhaps<number> = Perhaps.of(someInput);
 
+// maybeNumber might a Something<number> or a Nothing. Both are represented by the type Perhaps<number>
+
 // 2. Pass a mapping function
 const maybeDouble = maybeNumber.map(double);
 
-// 3. The function is only called if someInput was not null / undefined
+// 3. The function is only used if someInput was not null / undefined
 
-// 4. The resulting value comes back as a new perhaps
-const maybeQuadruple: Perhaps<number> = maybeDouble.map(double)
+// 4. At this point, maybeDouble might be 
+// a) a Something<number> (if all went well)
+// b) a Nothing (if maybeNumber was a Nothing, or if double returned null)
+// c) a Problem (if double threw an exception)
 
-// 5. When you need the inner value, call one of the unwrap methods, or a type-guard method
+// 4. When you need the inner value, call one of the unwrap methods, or a type-guard method
 
-maybeQuadruple.unwrap(); // may be number or null
-maybeQuadruple.unwrapOr(123); // will return 123 if contents invalid
-maybeQuadruple.unwrapOrThrow(new Error('The number does not exist')); // throw error if contents invalid
+maybeDouble.unwrap();
+// maybeDouble's type | will return
+// ---------------------------------
+// Nothing            | null
+// Something          | number
+// Problem            | throws error 
+
+maybeDouble.unwrapOr(123);
+// maybeDouble's type | will return
+// ---------------------------------
+// Nothing            | passed number (123)
+// Something          | original number
+// Problem            | throws error 
+
+maybeDouble.unwrapOrThrow(new Error('The number does not exist'));
+// maybeDouble's type | will return
+// ---------------------------------
+// Nothing            | throws passed error
+// Something          | number
+// Problem            | throws original error 
 
 if (maybeQuadruple.isSomething()) {
     // Only true if contents valid
-    // TypeScript now knows maybeQuadruple.unwrap will never be null
+    // TypeScript will infer that maybeQuadruple.unwrap() cannot be null
 }
 
 if (maybeQuadruple.isNothing()) {
