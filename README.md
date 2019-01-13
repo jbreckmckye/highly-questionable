@@ -13,6 +13,14 @@ The core concept is simple:
 
 If you're familiar with monads, `Perhaps` is heavily inspired by a combination of `Maybe/Option` and `Result`.
 
+## Setup
+
+```
+npm install highly-questionable
+```
+
+TypeScript should work out of the box.
+
 ## Give me some examples
 
 ### Handling nullable values
@@ -20,7 +28,8 @@ If you're familiar with monads, `Perhaps` is heavily inspired by a combination o
 ```typescript
 import {Perhaps} from 'highly-questionable';
 
-const user = randomOf(
+// Choose one at random
+const user = oneOf(
     null,
 
     {name: 'Simon'},
@@ -55,7 +64,7 @@ if (mailto.isSomething()) {
 }
 ```
 
-### Map functions can return Perhaps values without any fuss
+### Map functions may return Perhaps objects without any fuss
 
 ```typescript
 function getUserName(user: User | null) {
@@ -88,8 +97,7 @@ const userName = Perhaps
 function getUserCreditCard(user: User | null) {
     return Perhaps.of(user)
         .ifExists(user => {
-            const age = Perhaps.of(user.age).unwrapOrThrow(new Error('Could not verify age'));
-            if (age < 21) throw new Error('User is too young');
+            if (user.age < 21) throw new Error('User is too young');
         })
         .map(user => user.creditCard);
 }
@@ -100,6 +108,26 @@ const creditCardNumbers = Perhaps
     .mapEach(sendToDodgyServer) // won't be called if getUserCreditCard throws errors
     .catch(err => loggingFramework(err));
 ```
+
+### Arrays can be flat-mapped
+
+```typescript
+const user1 = {name: 'Alyx Vance'};
+const user2 = {name: 'Gordon Freeman'};
+
+const getLettersInString = (input: string): Array<Char> => {
+    return removeDuplicates(input.toLowerCase().split(''));
+}
+
+const letters = Perhaps
+    .of([user1, user2])
+    .mapEach(user => user.name)
+    .flatMapAll(getLettersInString)
+    .map(letters => letters.sort())
+    .unwrap(); // [a, c, d, f, e, g, l, m, n, o, r, v, x, y]
+
+```
+
 
 (todo)
 
