@@ -120,9 +120,9 @@ describe('Nothing', ()=> {
         });
     });
 
-    describe('forOne', ()=> {
+    describe('ifExists', ()=> {
         const fn = jest.fn();
-        const result = Nothing.forOne(fn);
+        const result = Nothing.ifExists(fn);
 
         test('does not invoke function', ()=> {
             expect(fn).not.toHaveBeenCalled();
@@ -300,9 +300,9 @@ describe('Problem', ()=> {
         });
     });
 
-    describe('forOne', ()=> {
+    describe('ifExists', ()=> {
         const fn = jest.fn();
-        const result = problem.forOne(fn);
+        const result = problem.ifExists(fn);
 
         test('does not invoke function', ()=> {
             expect(fn).not.toHaveBeenCalled();
@@ -470,7 +470,7 @@ describe('Something', ()=> {
         describe('when wrapped value is not array', ()=> {
             const fn = jest.fn();
             fn.mockImplementation(double);
-            const result = something.forOne(fn);
+            const result = something.ifExists(fn);
 
             test('fn is called with inner value', ()=> {
                 expect(fn).toHaveBeenCalledWith(123);
@@ -488,7 +488,7 @@ describe('Something', ()=> {
         describe('when wrapped value is array', ()=> {
             const fn = jest.fn();
             fn.mockImplementation(getLength);
-            const result = manyThings.forOne(fn);
+            const result = manyThings.ifExists(fn);
 
             test('fn is called once, with whole array', ()=> {
                 expect(fn).toHaveBeenCalledTimes(1);
@@ -506,12 +506,12 @@ describe('Something', ()=> {
 
         describe('when fn throws error', ()=> {
             test('if wrapped value not array, returns Problem', ()=> {
-                const result = something.forOne(explode);
+                const result = something.ifExists(explode);
                 expect(result).toBeInstanceOf(Problem);
             });
 
             test('if wrapped value is array, returns Problem', ()=> {
-                const result = manyThings.forOne(explode);
+                const result = manyThings.ifExists(explode);
                 expect(result).toBeInstanceOf(Problem);
             });
         });

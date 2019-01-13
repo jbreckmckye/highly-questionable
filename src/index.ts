@@ -6,7 +6,7 @@ export abstract class Perhaps<T> {
 
     abstract forEach(fn: (input: any) => any): Perhaps<T>
 
-    abstract forOne(fn: (input: T) => any): Perhaps<T>
+    abstract ifExists(fn: (input: T) => any): Perhaps<T>
 
     abstract isNothing(): this is None;
 
@@ -97,7 +97,7 @@ export class None extends Perhaps<any> {
 
     public forEach = (fn: any) => Nothing;
 
-    public forOne = (fn: any) => Nothing;
+    public ifExists = (fn: any) => Nothing;
 
     public isNothing = predicateTrue;
 
@@ -153,7 +153,7 @@ export class Problem implements Perhaps<any> {
 
     public forEach = (fn: any) => this;
 
-    public forOne = (fn: any) => this;
+    public ifExists = (fn: any) => this;
 
     public isNothing = predicateFalse;
 
@@ -218,7 +218,7 @@ export class Something<T> implements Perhaps<T> {
         return this;
     }
 
-    public forOne(fn: (input: T) => any) {
+    public ifExists(fn: (input: T) => any) {
         try {
             fn(this.value);
             return this;
