@@ -6,10 +6,43 @@ Highly Questionable allows you to safely and elegantly handle values that might 
 
 The core concept is simple:
 
-1. You wrap value, nulls or errors in a `Perhaps`
-2. You pass the Perhaps operator functions, for use with non-null values
+1. You wrap a value, null, undefined or error in a `Perhaps`
+2. You pass in 'mapping' functions, which only need to work with non-empty, non-error values
 3. If the value exists / is not an error, it is applied to the operator
 4. The resulting value / null / error comes back wrapped in a new `Perhaps`
+5. When you need the inner value, call one of the unwrap methods, or a type-guard method
+
+In code:
+
+```typescript
+// 1. Wrap a value, null or undefined in Perhaps
+const maybeNumber: Perhaps<number> = Perhaps.of(someInput);
+
+// 2. Pass a mapping function
+const maybeDouble = maybeNumber.map(double);
+
+// 3. The function is only called if someInput was not null / undefined
+
+// 4. The resulting value comes back as a new perhaps
+const maybeQuadruple: Perhaps<number> = maybeDouble.map(double)
+
+// 5. When you need the inner value, call one of the unwrap methods, or a type-guard method
+
+maybeQuadruple.unwrap(); // may be number or null
+maybeQuadruple.unwrapOr(123); // will return 123 if contents invalid
+maybeQuadruple.unwrapOrThrow(new Error('The number does not exist')); // throw error if contents invalid
+
+if (maybeQuadruple.isSomething()) {
+    // Only true if contents valid
+    // TypeScript now knows maybeQuadruple.unwrap will never be null
+}
+
+if (maybeQuadruple.isNothing()) {
+    // Only true if contents empty
+}
+```
+
+I recommend taking a look at the 'Tour of Features', below.
 
 If you're familiar with monads, `Perhaps` is heavily inspired by a combination of `Maybe/Option` and `Result`.
 
@@ -21,182 +54,24 @@ npm install highly-questionable
 
 TypeScript should work out of the box.
 
-## Give me some examples
+## Tour of features / examples
 
-### Handling nullable values
+See [EXAMPLES.md](EXAMPLES.md)
 
-```typescript
-import {Perhaps} from 'highly-questionable';
+## API
 
-// Choose one at random
-const user = oneOf(
-    null,
+See [API.md](API.md) [TODO]
 
-    {name: 'Simon'},
+## Due dilligence
 
-    {name: 'Alyx', contactDetails: {}},
+### License
 
-    {name: 'Malcolm', contactDetails: {
-        email: null
-    }},
+This library is provided under an [TO FILL] license. This means... .
 
-    {name: 'Clarissa', contactDetails: {
-        email: 'clarissa@yahoo.com'
-    }}
-);
+For more details, see [LICENSE.md];
 
-// Uses map functions only if last result != empty
-const mailto = Perhaps.of(user)
-    .map(user => user.contactDetails)
-    .map(details => details.email)
-    .map(email => 'mailto:' + email);
+### Library size
 
-// Can set default values as you go
-const name = Perhaps.of(user)
-    .map(user => user.name)
-    .or('Anonymous')
-    .map(toUpperCase);
+(to calculate)
 
-// Perhaps provides methods to check whether content is valid
-if (mailto.isSomething()) {
-    // TypeScript knows this value cannot be null, due to .isSomething type guard
-    return mailto.unwrap();
-}
-```
-
-### Map functions may return Perhaps objects without any fuss
-
-```typescript
-function getUserName(user: User | null) {
-    return Perhaps.of(user).map(user => user.name);
-}
-
-const user1 = {name: 'Alyx'};
-const user2 = {name: 'Gordon'};
-const user3 = {};
-const user4 = null;
-
-const userNames = Perhaps
-    .of([user1, user2, user3, user4])
-    .map(users => users.map(getUserName))
-    .unwrap(); // ['Alyx', 'Gordon']
-```
-
-### Can perform mapEach / forEach on arrays
-
-```typescript
-const userName = Perhaps
-    .of([user1, user2, user3, user4])
-    .mapEach(getUserName)
-    .forEach(name => console.log(name)) // 'Alyx', 'Gordon'
-```
-
-### Errors are handled like promise rejections
-
-```typescript
-function getUserCreditCard(user: User | null) {
-    return Perhaps.of(user)
-        .ifExists(user => {
-            if (user.age < 21) throw new Error('User is too young');
-        })
-        .map(user => user.creditCard);
-}
-
-const creditCardNumbers = Perhaps
-    .of([userA, userB, userC])
-    .mapEach(getUserCreditCard)
-    .mapEach(sendToDodgyServer) // won't be called if getUserCreditCard throws errors
-    .catch(err => loggingFramework(err));
-```
-
-### Arrays can be flat-mapped
-
-```typescript
-const user1 = {name: 'Alyx Vance'};
-const user2 = {name: 'Gordon Freeman'};
-
-const getLettersInString = (input: string): Array<Char> => {
-    return removeDuplicates(input.toLowerCase().split(''));
-}
-
-const letters = Perhaps
-    .of([user1, user2])
-    .mapEach(user => user.name)
-    .flatMapAll(getLettersInString)
-    .map(letters => letters.sort())
-    .unwrap(); // [a, c, d, f, e, g, l, m, n, o, r, v, x, y]
-
-```
-
-
-(todo)
-
-## Recipes
-
-### Obtaining a WebGL context with Perhaps
-
-```typescript
-import {Perhaps} from 'highly-questionable';
-
-const canvas = document.createElement('canvas');
-const context = Perhaps
-    .of(canvas.getContext('webgl2'))
-    .or(canvas.getContext('webgl'))
-    .orFrom(()=> canvas.getContext('experimental-webgl'));
-```
-
-### jQuery-like DOM selection using map & flatMap
-
-```typescript
-import {Perhaps} from 'highly-questionable';
-
-function queryAll(el: HTMLElement, selector: string) {
-    return Perhaps
-        .of(el.querySelectorAll(selector))
-        .map(results => Array.from(results));
-}
-
-const link = Perhaps
-    .of(queryAll(document, 'div'))
-    .flatMap(div => queryAll(div, 'li'))
-    .flatMap(li => queryAll(li, 'a'));
-```
-
-### Case matching
-
-```typescript
-import {Perhaps, Some, None, Type, Same} from 'highly-questionable';
-
-const isEmail = /^.+@.+$/g;
-
-const userName = Perhaps
-    .of(window.prompt('What is your name?'));
-
-const result = userName.case(
-    isEmail, x => 'mailto:' + x,
-    Type(Error), e => 'error:' + e.message,
-    Some, Same
-    None, 'unnamed'
-);
-```
-
-### Using promises
-
-```typescript
-import {Perhaps, Rejection} from 'highly-questionable';
-
-const fetchUsers = async ()=> {...};
-
-const userEmail = Perhaps
-    .from(fetchUsers)
-    .flatMap(
-        user => Perhaps
-            .of(user.email)
-            .or(user.email_address)
-            .or(Perhaps
-                .of(user.metadata)
-                .map(meta => meta.email || meta.email_address)
-            )
-            .map(m => 'mailto:' + m)
-    );
-```
+## Contributing / developing
