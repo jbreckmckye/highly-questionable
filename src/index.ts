@@ -85,21 +85,13 @@ export abstract class Perhaps<T> {
 };
 
 export class None extends Perhaps<any> {
-    static of(input: any) {
-        return Nothing;
-    }
+    static of = (input: any) => Nothing;
 
-    static from(fn: any) {
-        return Nothing;
-    }
+    static from = (fn: any) => Nothing;
 
-    public catch(handler: any) {
-        return Nothing;
-    }
+    public catch = (fn: any) => Nothing;
 
-    public forOne(fn: any) {
-        return Nothing;
-    }
+    public forOne = (fn: any) => Nothing;
 
     public isNothing = predicateTrue;
 
@@ -107,9 +99,7 @@ export class None extends Perhaps<any> {
 
     public isSomething = predicateFalse;
 
-    public map(fn: any): None {
-        return Nothing;
-    }
+    public map = (fn: any) => Nothing;
 
     public or<U>(alt: U): Perhaps<U> {
         return Perhaps.of(alt);
@@ -119,13 +109,9 @@ export class None extends Perhaps<any> {
         return Perhaps.from(fn);
     }
 
-    public peek(): null {
-        return null;
-    }
+    public peek = ()=> null;
 
-    public unwrap(): null {
-        return null;
-    }
+    public unwrap = ()=> null;
 
     public unwrapOr<T>(alt: T): T {
         return alt;
@@ -157,9 +143,7 @@ export class Problem implements Perhaps<any> {
         return Perhaps.from(()=> handler(this.err));
     }
 
-    public forOne(fn: any) {
-        return this;
-    }
+    public forOne = (fn: any) => this;
 
     public isNothing = predicateFalse;
 
@@ -167,9 +151,7 @@ export class Problem implements Perhaps<any> {
 
     public isSomething = predicateFalse;
 
-    public map(fn: any) {
-        return this;
-    }
+    public map = (fn: any) => this;
 
     public or<U>(alt: U): Perhaps<U> {
         return Perhaps.of(alt);
@@ -203,9 +185,7 @@ export class Something<T> implements Perhaps<T> {
         this.value = input;
     }
 
-    public catch() {
-        return this;
-    }
+    public catch = (fn: any)=> this;
 
     public forOne(fn: (input: T) => any) {
         try {
@@ -231,25 +211,15 @@ export class Something<T> implements Perhaps<T> {
         }
     }
 
-    public or() {
-        return this;
-    }
+    public or = (alt: any)=> this;
 
-    public orFrom() {
-        return this;
-    }
+    public orFrom = (fn: any)=> this;
 
-    public peek(): T {
-        return this.value;
-    }
+    public peek = ()=> this.value;
 
-    public unwrap(): T {
-        return this.value;
-    }
+    public unwrap = ()=> this.value;
 
-    public unwrapOr(): T {
-        return this.value;
-    }
+    public unwrapOr = (alt: any)=> this.value;
 
     public unwrapOrThrow(): T {
         return this.value;
