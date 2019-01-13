@@ -99,11 +99,29 @@ describe('Nothing', ()=> {
         });
     });
 
-    describe('forOne', ()=> {
+    describe('forEach', ()=> {
+        const fn = jest.fn();
+        const result = Nothing.forEach(fn);
+
         test('does not invoke function', ()=> {
-            const fn = jest.fn();
-            Nothing.forOne(fn);
             expect(fn).not.toHaveBeenCalled();
+        });
+
+        test('returns nothing', ()=> {
+            expect(result).toBe(Nothing);
+        });
+    });
+
+    describe('forOne', ()=> {
+        const fn = jest.fn();
+        const result = Nothing.forOne(fn);
+
+        test('does not invoke function', ()=> {
+            expect(fn).not.toHaveBeenCalled();
+        });
+    
+        test('returns nothing', ()=> {
+            expect(result).toBe(Nothing);
         });
     });
 
@@ -248,11 +266,29 @@ describe('Problem', ()=> {
         });
     });
 
-    describe('forOne', ()=> {
+    describe('forEach', ()=> {
+        const fn = jest.fn();
+        const result = problem.forEach(fn);
+
         test('does not invoke function', ()=> {
-            const fn = jest.fn();
-            problem.forOne(fn);
             expect(fn).not.toHaveBeenCalled();
+        });
+
+        test('returns problem', ()=> {
+            expect(result).toBe(problem);
+        });
+    });
+
+    describe('forOne', ()=> {
+        const fn = jest.fn();
+        const result = problem.forOne(fn);
+
+        test('does not invoke function', ()=> {
+            expect(fn).not.toHaveBeenCalled();
+        });
+
+        test('returns problem', ()=> {
+            expect(result).toBe(problem);
         });
     });
 
@@ -332,6 +368,7 @@ describe('Problem', ()=> {
 
 describe('Something', ()=> {
     const something = Perhaps.of(123);
+    const manyThings = Perhaps.of([1, 2, 3]);
     
     describe('catch', ()=> {
         test('returns the something', ()=> {
@@ -340,19 +377,113 @@ describe('Something', ()=> {
         });
     });
 
-    describe('forOne', ()=> {
-        const handler = jest.fn();
-        handler.mockImplementation((input: number) => input + 1);
+    describe('forEach', ()=> {
+        describe('when wrapped value is not array', ()=> {
+            const fn = jest.fn();
+            fn.mockImplementation((input: number) => input + 1);
+            const result = something.forEach(fn);
 
-        const result = something.forOne(handler);
+            test('fn is called with inner value', ()=> {
+                expect(fn).toHaveBeenCalledWith(123);
+            });
 
-        test('calls handler with inner value', ()=> {            
-            expect(handler).toHaveBeenCalledWith(123);
+            test('ignores fn return value', ()=> {
+                expect(result.unwrap()).toBe(123);
+            });
+
+            test('returns same something', ()=> {
+                expect(result).toBe(something);
+            });
         });
 
-        test('returns same something, unchanged', ()=> {
-            expect(result).toBeInstanceOf(Something);
-            expect(result.peek()).toBe(123);
+        describe('when wrapped value is array', ()=> {
+            const fn = jest.fn();
+            fn.mockImplementation((input: number) => input + 1);
+            const result = manyThings.forEach(fn);
+
+            test('fn is called with each array value', ()=> {
+                expect(fn).toHaveBeenCalledTimes(3);
+                expect(fn.mock.calls).toEqual([
+                    [1], 
+                    [2], 
+                    [3]
+                ]);
+            });
+
+            test('ignores fn return value', ()=> {
+                expect(result.unwrap()).toEqual([1, 2, 3]);
+            });
+
+            test('returns same something', ()=> {
+                expect(result).toBe(manyThings);
+            });
+        });
+
+        describe('when fn throws error', ()=> {
+            const fn = ()=> {throw new Error};
+
+            test('if wrapped value not array, returns Problem', ()=> {
+                const result = something.forEach(fn);
+                expect(result).toBeInstanceOf(Problem);
+            });
+
+            test('if wrapped value is array, returns first Problem created', ()=> {
+                const result = manyThings.forEach(fn);
+                expect(result).toBeInstanceOf(Problem);
+            });
+        });
+    });
+
+    describe('forOne', ()=> {        
+        describe('when wrapped value is not array', ()=> {
+            const fn = jest.fn();
+            fn.mockImplementation((input: number) => input + 1);
+            const result = something.forOne(fn);
+
+            test('fn is called with inner value', ()=> {
+                expect(fn).toHaveBeenCalledWith(123);
+            });
+
+            test('ignores fn return value', ()=> {
+                expect(result.unwrap()).toBe(123);
+            });
+
+            test('returns same something', ()=> {
+                expect(result).toBe(something);
+            });
+        });
+
+        describe('when wrapped value is array', ()=> {
+            const fn = jest.fn();
+            fn.mockImplementation((input: Array<number>) => input.length);
+            const result = manyThings.forOne(fn);
+
+            test('fn is called once, with whole array', ()=> {
+                expect(fn).toHaveBeenCalledTimes(1);
+                expect(fn).toHaveBeenCalledWith([1, 2, 3]);
+            });
+
+            test('ignores fn return value', ()=> {
+                expect(manyThings.unwrap()).toEqual([1, 2, 3]);
+            });
+
+            test('returns same something', ()=> {
+                expect(result).toBe(manyThings);
+            });
+        });
+
+        describe('when fn throws error', ()=> {
+            const fn = ()=> {throw new Error};
+
+            test('if wrapped value not array, returns Problem', ()=> {
+                const result = something.forOne(fn);
+                expect(result).toBeInstanceOf(Problem);
+            });
+
+            test('if wrapped value is array, returns Problem', ()=> {
+                const result = manyThings.forOne(fn);
+                expect(result).toBeInstanceOf(Problem);
+            });
         });
     });
 

@@ -4,6 +4,8 @@ const predicateTrue = ()=> true;
 export abstract class Perhaps<T> {
     abstract catch(handler: (err: Error) => T): Perhaps<T>
 
+    abstract forEach(fn: (input: any) => any): Perhaps<T>
+
     abstract forOne(fn: (input: T) => any): Perhaps<T>
 
     abstract isNothing(): this is None;
@@ -91,6 +93,8 @@ export class None extends Perhaps<any> {
 
     public catch = (fn: any) => Nothing;
 
+    public forEach = (fn: any) => Nothing;
+
     public forOne = (fn: any) => Nothing;
 
     public isNothing = predicateTrue;
@@ -143,6 +147,8 @@ export class Problem implements Perhaps<any> {
         return Perhaps.from(()=> handler(this.err));
     }
 
+    public forEach = (fn: any) => this;
+
     public forOne = (fn: any) => this;
 
     public isNothing = predicateFalse;
@@ -186,6 +192,25 @@ export class Something<T> implements Perhaps<T> {
     }
 
     public catch = (fn: any)=> this;
+
+    public forEach(fn: (input: any) => any) {
+        if (Array.isArray(this.value)) {
+            for (let i = 0; i < this.value.length; i++) {
+                try {
+                    fn(this.value[i]);
+                } catch (err) {
+                    return Problem.of(err);
+                }
+            }
+        } else {
+            try {
+                fn(this.value);
+            } catch (err) {
+                return Problem.of(err);
+            }            
+        }
+        return this;
+    }
 
     public forOne(fn: (input: T) => any) {
         try {
