@@ -16,6 +16,8 @@ export abstract class Perhaps<T> {
 
     abstract map<U=T>(mapper: (input: T) => Perhaps<U> | U): Perhaps<U>
 
+    abstract mapEach<U>(mapper: (input: any) => U | Perhaps<U>): Perhaps<Array<U>|U>
+
     abstract or(alt: T): Perhaps<T>
 
     abstract orFrom(fn: ()=> T | never): Perhaps<T>
@@ -105,6 +107,8 @@ export class None extends Perhaps<any> {
 
     public map = (fn: any) => Nothing;
 
+    public mapEach = (fn: any) => Nothing;
+
     public or<U>(alt: U): Perhaps<U> {
         return Perhaps.of(alt);
     }
@@ -158,6 +162,8 @@ export class Problem implements Perhaps<any> {
     public isSomething = predicateFalse;
 
     public map = (fn: any) => this;
+
+    public mapEach = (fn: any) => this;
 
     public or<U>(alt: U): Perhaps<U> {
         return Perhaps.of(alt);
@@ -233,6 +239,44 @@ export class Something<T> implements Perhaps<T> {
             return Perhaps.of(result);
         } catch (err) {
             return Problem.of(err);
+        }
+    }
+
+    public mapEach = <U>(mapper: (input: any) => U | Perhaps<U>): Perhaps<Array<U>|U> => {
+        if (Array.isArray(this.value)) {
+            const results = [];
+            for (let i = 0; i < this.value.length; i++) {
+                try {
+                    const result = mapper(this.value[i]);
+
+                    if (result instanceof Problem) {
+                        return result;
+
+                    } else if (result instanceof Something) {
+                        results.push(result.unwrap());
+
+                    } else if (result instanceof None) {
+                        continue;
+
+                    } else if (isEmpty(result)) {
+                        continue;
+                        
+                    } else {
+                        results.push(result);
+                    }
+                } catch (err) {
+                    return Problem.of(err);
+                }
+            }
+
+            if (results.length) {
+                return Perhaps.of(results);
+            } else {
+                return Nothing;
+            }
+
+        } else {
+            return this.map(mapper);
         }
     }
 
