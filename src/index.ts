@@ -1,3 +1,6 @@
+const predicateFalse = ()=> false;
+const predicateTrue = ()=> true;
+
 export abstract class Perhaps<T> {
     abstract catch(handler: (err: Error) => T): Perhaps<T>
 
@@ -98,17 +101,11 @@ export class None extends Perhaps<any> {
         return Nothing;
     }
 
-    public isNothing() {
-        return true;
-    }
+    public isNothing = predicateTrue;
 
-    public isProblem() {
-        return false;
-    }
+    public isProblem = predicateFalse;
 
-    public isSomething() {
-        return false;
-    }
+    public isSomething = predicateFalse;
 
     public map(fn: any): None {
         return Nothing;
@@ -164,17 +161,11 @@ export class Problem implements Perhaps<any> {
         return this;
     }
 
-    public isNothing() {
-        return false;
-    }
+    public isNothing = predicateFalse;
 
-    public isProblem() {
-        return true;
-    }
+    public isProblem = predicateTrue;
 
-    public isSomething() {
-        return false;
-    }
+    public isSomething = predicateFalse;
 
     public map(fn: any) {
         return this;
@@ -225,17 +216,11 @@ export class Something<T> implements Perhaps<T> {
         }
     }
 
-    public isNothing() {
-        return false;
-    }
+    public isNothing = predicateFalse;
 
-    public isProblem() {
-        return false;
-    }
+    public isProblem = predicateFalse;
 
-    public isSomething() {
-        return true;
-    }
+    public isSomething = predicateTrue;
 
     public map<U>(mapper: (input: T) => Perhaps<U> | U): Perhaps<U> {
         try {
