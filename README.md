@@ -2,85 +2,76 @@
 
 A TypeScript / JavaScript library for paranoid developers.
 
-Highly Questionable allows you to safely and elegantly handle values that might be null, undefined or Errors, without writing tedious null checks or try-catches everywhere.
+Highly Questionable allows you to safely and elegantly handle values that might be null, undefined or Errors, without writing tedious null checks and try-catches everywhere.
 
-If you're familiar with monads, `Perhaps` is heavily inspired by a combination of `Maybe/Option` and `Result`.
+It is loosely based on the `Option`, `Maybe` and `Result` monads from other languages. You could also think of it as like a synchronous `Promise`.
 
-If not, the best way to describe `Perhaps` is just to show some code:
+## Concept
+
+Values are wrapped in a `Perhaps` object. When you want to use the value, you pass perhaps 'mapping' functions that are only run if the value is valid. The output of the 'mapping' gets wrapped in another `Perhaps`, and so on, so forth, like so:
 
 ```typescript
-import {Perhaps, Nothing} from 'highly-questionable';
-
-// 1. Wrap a value, null or undefined in Perhaps
-const maybeNumber: Perhaps<number> = Perhaps.of(someInput);
-
-// maybeNumber might a Something<number> or a Nothing. Both are represented by the type Perhaps<number>
-
-// 2. Pass a mapping function.
-const maybeDouble = maybeNumber.map(double);
-
-// 3. The function is only used if someInput was not null / undefined
-
-// 4. At this point, maybeDouble might be 
-// a) a Something<number> (if all went well)
-// b) a Nothing (if maybeNumber was a Nothing, or if double returned null)
-// c) a Problem (if double threw an exception)
-
-// 4. When you need the inner value, call one of the unwrap methods, or a type-guard method
-
-maybeDouble.unwrap();
-// maybeDouble's type | will return
-// ---------------------------------
-// Nothing            | null
-// Something          | number
-// Problem            | throws error 
-
-maybeDouble.unwrapOr(123);
-// maybeDouble's type | will return
-// ---------------------------------
-// Nothing            | passed number (123)
-// Something          | original number
-// Problem            | throws error 
-
-maybeDouble.unwrapOrThrow(new Error('The number does not exist'));
-// maybeDouble's type | will return
-// ---------------------------------
-// Nothing            | throws passed error
-// Something          | number
-// Problem            | throws original error 
-
-if (maybeDouble.isSomething()) {
-    // Only true if contents valid
-    return maybeDouble.unwrap(); // TypeScript will infer that this cannot be null
-}
-
-if (maybeQuadruple.isNothing()) {
-    // Only true if contents empty
-    // Equivalent to maybeDouble === Nothing
-}
-
-if (maybeQuadruple.isProblem()) {
-    // Only true if contents erroneous
-}
+const userName = Perhaps.of(userJSON)
+    .map(json => JSON.parse(json))
+    .map(user => user.details)
+    .map(details => details.name);
 ```
 
-I recommend taking a look at the 'Tour of Features', below.
+There are three things that could normally fail here: JSON.parse might throw an error; the user may not have details; or details may not have a name. `Perhaps` will handle each one gracefully.
 
-## Setup
+When you need to actually use a value, there are various methods and checks to make this safe:
 
+```typescript
+userName.forOne(name => {
+    // This only runs if userName exists and contains no errors
+    print(name);
+});
+
+if (userName instanceof Something) {
+    // If using TypeScript, the compiler will now know the unwrapped value is safe
+    print(userName.unwrap());
+}
+
+if (userName !== Nothing) {
+    // 'catch' is another way to handle errors, and works like Promise.catch
+    const unwrapped = userName.catch(error => 'Unretrievable').unwrap();
+    print(unwrapped);
+}
+
+print(userName.unwrapOr('Anonymous'));
 ```
+
+For more details, consult the [API docs](API.md).
+
+## Setup & usage
+
+Installing the package:
+
+```bash
 npm install highly-questionable
+```
+
+Importing the code:
+
+```typescript
+// TypeScript / ESNext
+import {Perhaps, Something, Nothing, Problem} from 'highly-questionable';
+```
+
+```javascript
+// Node
+const {Perhaps, Something, Nothing, Problem} = require('highly-questionable');
 ```
 
 TypeScript should work out of the box.
 
-## Tour of features / examples
-
-See [EXAMPLES.md](EXAMPLES.md)
-
 ## API
 
-See [API.md](API.md) [TODO]
+See [API.md](API.md).
+
+## Examples / recipes
+
+See [EXAMPLES.md](EXAMPLES.md).
 
 ## Due dilligence
 

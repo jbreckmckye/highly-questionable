@@ -1,18 +1,9 @@
-const predicateFalse = ()=> false;
-const predicateTrue = ()=> true;
-
 export abstract class Perhaps<T> {
     abstract catch(handler: (err: Error) => T): Perhaps<T>
 
     abstract forEach(fn: (input: any) => any): Perhaps<T>
 
     abstract ifExists(fn: (input: T) => any): Perhaps<T>
-
-    abstract isNothing(): this is None;
-
-    abstract isProblem(): this is Problem;
-
-    abstract isSomething(): this is Something<T>
 
     abstract map<U=T>(mapper: (input: T) => Perhaps<U> | U): Perhaps<U>
 
@@ -38,13 +29,13 @@ export abstract class Perhaps<T> {
         for (let i = 0; i < maybes.length; i++) {
             const maybe = maybes[i];
 
-            if (maybe.isSomething()) {
+            if (maybe instanceof Something) {
                 joinInputs.push(maybe.unwrap());
 
-            } else if (maybe.isProblem()) {
+            } else if (maybe instanceof Problem) {
                 return maybe;
             
-            } else if (maybe.isNothing()) {
+            } else if (maybe instanceof None) {
                 return maybe;
 
             } else {
@@ -60,7 +51,7 @@ export abstract class Perhaps<T> {
         }
     }
 
-    static of<U>(input: any): Perhaps<U> {
+    static of<U>(input: U | Perhaps<U>): Perhaps<U> {
         if (input instanceof None) {
             return input;
 
@@ -74,7 +65,7 @@ export abstract class Perhaps<T> {
             return Nothing as Perhaps<U>;
 
         } else {
-            return new Something<U>(input);
+            return new Something<U>(input as U);
         }
     }
 
@@ -88,26 +79,20 @@ export abstract class Perhaps<T> {
     }
 };
 
-export class None extends Perhaps<any> {
-    static of = (input: any) => Nothing;
+export class None extends Perhaps<null> {
+    static of = (input: any): None => Nothing;
 
-    static from = (fn: any) => Nothing;
+    static from = (fn: any): None => Nothing;
 
-    public catch = (fn: any) => Nothing;
+    public catch = (fn: any): None => Nothing;
 
-    public forEach = (fn: any) => Nothing;
+    public forEach = (fn: any): None => Nothing;
 
-    public ifExists = (fn: any) => Nothing;
+    public ifExists = (fn: any): None => Nothing;
 
-    public isNothing = predicateTrue;
+    public map = (fn: any): None => Nothing;
 
-    public isProblem = predicateFalse;
-
-    public isSomething = predicateFalse;
-
-    public map = (fn: any) => Nothing;
-
-    public mapEach = (fn: any) => Nothing;
+    public mapEach = (fn: any): None => Nothing;
 
     public or<U>(alt: U): Perhaps<U> {
         return Perhaps.of(alt);
@@ -117,9 +102,9 @@ export class None extends Perhaps<any> {
         return Perhaps.from(fn);
     }
 
-    public peek = ()=> null;
+    public peek = (): null => null;
 
-    public unwrap = ()=> null;
+    public unwrap = (): null => null;
 
     public unwrapOr<T>(alt: T): T {
         return alt;
@@ -154,12 +139,6 @@ export class Problem implements Perhaps<any> {
     public forEach = (fn: any) => this;
 
     public ifExists = (fn: any) => this;
-
-    public isNothing = predicateFalse;
-
-    public isProblem = predicateTrue;
-
-    public isSomething = predicateFalse;
 
     public map = (fn: any) => this;
 
@@ -226,12 +205,6 @@ export class Something<T> implements Perhaps<T> {
             return Problem.of(err);
         }
     }
-
-    public isNothing = predicateFalse;
-
-    public isProblem = predicateFalse;
-
-    public isSomething = predicateTrue;
 
     public map<U>(mapper: (input: T) => Perhaps<U> | U): Perhaps<U> {
         try {

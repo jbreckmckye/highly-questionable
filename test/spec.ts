@@ -133,20 +133,6 @@ describe('Nothing', ()=> {
         });
     });
 
-    describe('is-checks', ()=> {
-        test('is nothing', ()=> {
-            expect(Nothing.isNothing()).toBe(true);
-        });
-
-        test('is not a error', ()=> {
-            expect(Nothing.isProblem()).toBe(false)
-        });
-
-        test('is not a something', ()=> {
-            expect(Nothing.isSomething()).toBe(false);
-        });
-    })
-
     describe('map', ()=> {
         const mapper = jest.fn();
         const result = Nothing.map(mapper);
@@ -310,20 +296,6 @@ describe('Problem', ()=> {
 
         test('returns problem', ()=> {
             expect(result).toBe(problem);
-        });
-    });
-
-    describe('is-checks', ()=> {
-        test('is not nothing', ()=> {
-            expect(problem.isNothing()).toBe(false);
-        });
-
-        test('is not something', ()=> {
-            expect(problem.isSomething()).toBe(false);
-        });
-
-        test('is a problem', ()=> {
-            expect(problem.isProblem()).toBe(true);
         });
     });
 
@@ -514,20 +486,6 @@ describe('Something', ()=> {
                 const result = manyThings.ifExists(explode);
                 expect(result).toBeInstanceOf(Problem);
             });
-        });
-    });
-
-    describe('is-checks', ()=> {
-        test('is not nothing', ()=> {
-            expect(something.isNothing()).toBe(false);
-        });
-
-        test('is something', ()=> {
-            expect(something.isSomething()).toBe(true);
-        });
-
-        test('is not a problem', ()=> {
-            expect(something.isProblem()).toBe(false);
         });
     });
 
