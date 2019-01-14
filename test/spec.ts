@@ -122,7 +122,7 @@ describe('Nothing', ()=> {
 
     describe('ifExists', ()=> {
         const fn = jest.fn();
-        const result = Nothing.ifExists(fn);
+        const result = Nothing.forOne(fn);
 
         test('does not invoke function', ()=> {
             expect(fn).not.toHaveBeenCalled();
@@ -288,7 +288,7 @@ describe('Problem', ()=> {
 
     describe('ifExists', ()=> {
         const fn = jest.fn();
-        const result = problem.ifExists(fn);
+        const result = problem.forOne(fn);
 
         test('does not invoke function', ()=> {
             expect(fn).not.toHaveBeenCalled();
@@ -442,7 +442,7 @@ describe('Something', ()=> {
         describe('when wrapped value is not array', ()=> {
             const fn = jest.fn();
             fn.mockImplementation(double);
-            const result = something.ifExists(fn);
+            const result = something.forOne(fn);
 
             test('fn is called with inner value', ()=> {
                 expect(fn).toHaveBeenCalledWith(123);
@@ -460,7 +460,7 @@ describe('Something', ()=> {
         describe('when wrapped value is array', ()=> {
             const fn = jest.fn();
             fn.mockImplementation(getLength);
-            const result = manyThings.ifExists(fn);
+            const result = manyThings.forOne(fn);
 
             test('fn is called once, with whole array', ()=> {
                 expect(fn).toHaveBeenCalledTimes(1);
@@ -478,12 +478,12 @@ describe('Something', ()=> {
 
         describe('when fn throws error', ()=> {
             test('if wrapped value not array, returns Problem', ()=> {
-                const result = something.ifExists(explode);
+                const result = something.forOne(explode);
                 expect(result).toBeInstanceOf(Problem);
             });
 
             test('if wrapped value is array, returns Problem', ()=> {
-                const result = manyThings.ifExists(explode);
+                const result = manyThings.forOne(explode);
                 expect(result).toBeInstanceOf(Problem);
             });
         });

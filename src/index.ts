@@ -3,7 +3,7 @@ export abstract class Perhaps<T> {
 
     abstract forEach(fn: (input: any) => any): Perhaps<T>
 
-    abstract ifExists(fn: (input: T) => any): Perhaps<T>
+    abstract forOne(fn: (input: T) => any): Perhaps<T>
 
     abstract map<U=T>(mapper: (input: T) => Perhaps<U> | U): Perhaps<U>
 
@@ -47,7 +47,7 @@ export abstract class Perhaps<T> {
             const result = join(...joinInputs);
             return Perhaps.of(result);
         } catch (err) {
-            return Problem.of(err);
+            return new Problem(err);
         }
     }
 
@@ -74,7 +74,7 @@ export abstract class Perhaps<T> {
             const value = fn();
             return Perhaps.of(value);
         } catch (err) {
-            return Problem.of(err);
+            return new Problem(err);
         }
     }
 };
@@ -88,7 +88,7 @@ export class None extends Perhaps<null> {
 
     public forEach = (fn: any): None => Nothing;
 
-    public ifExists = (fn: any): None => Nothing;
+    public forOne = (fn: any): None => Nothing;
 
     public map = (fn: any): None => Nothing;
 
@@ -138,7 +138,7 @@ export class Problem implements Perhaps<any> {
 
     public forEach = (fn: any) => this;
 
-    public ifExists = (fn: any) => this;
+    public forOne = (fn: any) => this;
 
     public map = (fn: any) => this;
 
@@ -176,6 +176,18 @@ export class Something<T> implements Perhaps<T> {
         this.value = input;
     }
 
+    static of<T>(input: T) {
+        return new Something(input);
+    }
+
+    static from<T>(fn: ()=> T) {
+        try {
+            return new Something(fn());
+        } catch (err) {
+            return new Problem(err);
+        }
+    }
+
     public catch = (fn: any)=> this;
 
     public forEach(fn: (input: any) => any) {
@@ -184,25 +196,25 @@ export class Something<T> implements Perhaps<T> {
                 try {
                     fn(this.value[i]);
                 } catch (err) {
-                    return Problem.of(err);
+                    return new Problem(err);
                 }
             }
         } else {
             try {
                 fn(this.value);
             } catch (err) {
-                return Problem.of(err);
+                return new Problem(err);
             }            
         }
         return this;
     }
 
-    public ifExists(fn: (input: T) => any) {
+    public forOne(fn: (input: T) => any) {
         try {
             fn(this.value);
             return this;
         } catch (err) {
-            return Problem.of(err);
+            return new Problem(err);
         }
     }
 
@@ -211,7 +223,7 @@ export class Something<T> implements Perhaps<T> {
             const result = mapper(this.value);
             return Perhaps.of(result);
         } catch (err) {
-            return Problem.of(err);
+            return new Problem(err);
         }
     }
 
@@ -238,7 +250,7 @@ export class Something<T> implements Perhaps<T> {
                         results.push(result);
                     }
                 } catch (err) {
-                    return Problem.of(err);
+                    return new Problem(err);
                 }
             }
 
