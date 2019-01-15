@@ -1,13 +1,9 @@
 export abstract class Perhaps<T> {
     abstract catch(handler: (err: Error) => T): Perhaps<T>
 
-    abstract forEach(fn: (input: any) => any): Perhaps<T>
-
     abstract forOne(fn: (input: T) => any): Perhaps<T>
 
     abstract map<U=T>(mapper: (input: T) => Perhaps<U> | U): Perhaps<U>
-
-    abstract mapEach<U>(mapper: (input: any) => U | Perhaps<U>): Perhaps<Array<U>|U>
 
     abstract or(alt: T): Perhaps<T>
 
@@ -60,7 +56,7 @@ export abstract class Perhaps<T> {
         }
     }
 
-    static of<U>(input: U | Perhaps<U>): Perhaps<U> {
+    static of<U>(input: any): Perhaps<U> {
         if (input instanceof None) {
             return input;
 
@@ -80,27 +76,17 @@ export abstract class Perhaps<T> {
 };
 
 export class None extends Perhaps<null> {
-    static of = (input: any): None => Nothing;
-
-    static from = (fn: any): None => Nothing;
-
     public catch = (fn: any): None => Nothing;
-
-    public forEach = (fn: any): None => Nothing;
 
     public forOne = (fn: any): None => Nothing;
 
     public map = (fn: any): None => Nothing;
 
-    public mapEach = (fn: any): None => Nothing;
-
-    public mapEachFlat = (fn: any): None => Nothing;
-
     public or<U>(alt: U): Perhaps<U> {
         return Perhaps.of(alt);
     }
 
-    public orFrom<U>(fn: ()=> U | never) {
+    public orFrom<U>(fn: ()=> U | any) {
         return Perhaps.from(fn);
     }
 
@@ -119,34 +105,21 @@ export class None extends Perhaps<null> {
 
 export const Nothing = new None();
 
-export class Problem implements Perhaps<any> {
+export class Problem extends Perhaps<any> {
     private err: Error;
 
     constructor(err: Error) {
+        super();
         this.err = err;
-    }
-
-    static of(err: Error): Problem {
-        return new Problem(err);
-    }
-
-    static from(fn: ()=> Error) {
-        return new Problem(fn());
     }
 
     public catch<T>(handler: (err: Error) => T): Perhaps<T> {
         return Perhaps.from(()=> handler(this.err));
     }
 
-    public forEach = (fn: any): Problem => this;
-
     public forOne = (fn: any): Problem => this;
 
     public map = (fn: any): Problem => this;
-
-    public mapEach = (fn: any): Problem => this;
-
-    public mapEachFlat = (fn: any): Problem => this;
 
     public or<U>(alt: U): Perhaps<U> {
         return Perhaps.of(alt);
@@ -173,23 +146,12 @@ export class Problem implements Perhaps<any> {
     }
 }
 
-export class Something<T> implements Perhaps<T> {
+export class Something<T> extends Perhaps<T> {
     private value: T;
 
     constructor(input: T) {
+        super();
         this.value = input;
-    }
-
-    static of<T>(input: T) {
-        return new Something(input);
-    }
-
-    static from<T>(fn: ()=> T) {
-        try {
-            return new Something(fn());
-        } catch (err) {
-            return new Problem(err);
-        }
     }
 
     public catch = (fn: any)=> this;
@@ -230,46 +192,6 @@ export class Something<T> implements Perhaps<T> {
             return new Problem(err);
         }
     }
-
-    public mapEach = <U>(mapper: (input: any) => U | Perhaps<U>): Perhaps<Array<U>|U> => {
-        if (Array.isArray(this.value)) {
-            const results = [];
-            for (let i = 0; i < this.value.length; i++) {
-                try {
-                    const result = mapper(this.value[i]);
-
-                    if (result instanceof Problem) {
-                        return result;
-
-                    } else if (result instanceof Something) {
-                        results.push(result.unwrap());
-
-                    } else if (result instanceof None) {
-                        continue;
-
-                    } else if (isEmpty(result)) {
-                        continue;
-                        
-                    } else {
-                        results.push(result);
-                    }
-                } catch (err) {
-                    return new Problem(err);
-                }
-            }
-
-            if (results.length) {
-                return Perhaps.of(results);
-            } else {
-                return Nothing;
-            }
-
-        } else {
-            return this.map(mapper);
-        }
-    }
-
-
 
     public or = (alt: any)=> this;
 

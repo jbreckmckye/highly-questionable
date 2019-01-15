@@ -2,6 +2,8 @@
 
 A TypeScript / JavaScript library for paranoid developers.
 
+**Caution, experimental!**
+
 Highly Questionable allows you to safely and elegantly handle values that might be null, undefined or Errors, without writing tedious null checks and try-catches everywhere. It is loosely based on the `Option`, `Maybe` and `Result` monads from other languages.
 
 Think of it like a synchronous `Promise`, with `map/catch` methods equivalent to `then/catch`. 'Map' won't be called if the value doesn't exist, and you can handle errors with `catch`.
@@ -98,7 +100,7 @@ This project has no production dependencies.
 
 ### Library size
 
-At v1.0.3, the whole library minified and gzipped amounted to 1231 bytes.
+At v1.0.4, the whole library minified and gzipped amounted to 1018 bytes.
 
 ## Contributing / developing
 

@@ -1,6 +1,6 @@
 {
   "name": "highly-questionable",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A library for paranoid JavaScript developers",
   "main": "dist/index.js",
   "scripts": {

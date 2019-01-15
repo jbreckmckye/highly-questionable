@@ -61,11 +61,8 @@ class None extends Perhaps {
     constructor() {
         super(...arguments);
         this.catch = (fn) => exports.Nothing;
-        this.forEach = (fn) => exports.Nothing;
         this.forOne = (fn) => exports.Nothing;
         this.map = (fn) => exports.Nothing;
-        this.mapEach = (fn) => exports.Nothing;
-        this.mapEachFlat = (fn) => exports.Nothing;
         this.peek = () => null;
         this.unwrap = () => null;
     }
@@ -82,24 +79,14 @@ class None extends Perhaps {
         throw err;
     }
 }
-None.of = (input) => exports.Nothing;
-None.from = (fn) => exports.Nothing;
 exports.None = None;
 exports.Nothing = new None();
-class Problem {
+class Problem extends Perhaps {
     constructor(err) {
-        this.forEach = (fn) => this;
+        super();
         this.forOne = (fn) => this;
         this.map = (fn) => this;
-        this.mapEach = (fn) => this;
-        this.mapEachFlat = (fn) => this;
         this.err = err;
-    }
-    static of(err) {
-        return new Problem(err);
-    }
-    static from(fn) {
-        return new Problem(fn());
     }
     catch(handler) {
         return Perhaps.from(() => handler(this.err));
@@ -124,63 +111,16 @@ class Problem {
     }
 }
 exports.Problem = Problem;
-class Something {
+class Something extends Perhaps {
     constructor(input) {
+        super();
         this.catch = (fn) => this;
-        this.mapEach = (mapper) => {
-            if (Array.isArray(this.value)) {
-                const results = [];
-                for (let i = 0; i < this.value.length; i++) {
-                    try {
-                        const result = mapper(this.value[i]);
-                        if (result instanceof Problem) {
-                            return result;
-                        }
-                        else if (result instanceof Something) {
-                            results.push(result.unwrap());
-                        }
-                        else if (result instanceof None) {
-                            continue;
-                        }
-                        else if (isEmpty(result)) {
-                            continue;
-                        }
-                        else {
-                            results.push(result);
-                        }
-                    }
-                    catch (err) {
-                        return new Problem(err);
-                    }
-                }
-                if (results.length) {
-                    return Perhaps.of(results);
-                }
-                else {
-                    return exports.Nothing;
-                }
-            }
-            else {
-                return this.map(mapper);
-            }
-        };
         this.or = (alt) => this;
         this.orFrom = (fn) => this;
         this.peek = () => this.value;
         this.unwrap = () => this.value;
         this.unwrapOr = (alt) => this.value;
         this.value = input;
-    }
-    static of(input) {
-        return new Something(input);
-    }
-    static from(fn) {
-        try {
-            return new Something(fn());
-        }
-        catch (err) {
-            return new Problem(err);
-        }
     }
     forEach(fn) {
         if (Array.isArray(this.value)) {

@@ -111,19 +111,6 @@ describe('Nothing', ()=> {
         });
     });
 
-    describe('forEach', ()=> {
-        const fn = jest.fn();
-        const result = Nothing.forEach(fn);
-
-        test('does not invoke function', ()=> {
-            expect(fn).not.toHaveBeenCalled();
-        });
-
-        test('returns nothing', ()=> {
-            expect(result).toBe(Nothing);
-        });
-    });
-
     describe('ifExists', ()=> {
         const fn = jest.fn();
         const result = Nothing.forOne(fn);
@@ -149,19 +136,6 @@ describe('Nothing', ()=> {
             expect(result).toBe(Nothing);
         });
     });
-
-    describe('mapEach', ()=> {
-        const mapper = jest.fn();
-        const result = Nothing.mapEach(mapper);
-
-        test('mapper is not invoked', ()=> {            
-            expect(mapper).not.toHaveBeenCalled();
-        });
-
-        test('returns Nothing again', ()=> {
-            expect(result).toBe(Nothing);
-        });
-    })
 
     describe('or', ()=> {
         test('empty input returns Nothing', ()=> {
@@ -277,19 +251,6 @@ describe('Problem', ()=> {
         });
     });
 
-    describe('forEach', ()=> {
-        const fn = jest.fn();
-        const result = problem.forEach(fn);
-
-        test('does not invoke function', ()=> {
-            expect(fn).not.toHaveBeenCalled();
-        });
-
-        test('returns problem', ()=> {
-            expect(result).toBe(problem);
-        });
-    });
-
     describe('ifExists', ()=> {
         const fn = jest.fn();
         const result = problem.forOne(fn);
@@ -306,19 +267,6 @@ describe('Problem', ()=> {
     describe('map', ()=> {
         const mapper = jest.fn();
         const result = problem.map(mapper);
-
-        test('mapper is not called', ()=> {            
-            expect(mapper).not.toHaveBeenCalled();
-        });
-
-        test('returns the original problem', ()=> {
-            expect(result).toBeInstanceOf(Problem);
-        });
-    });
-
-    describe('mapEach', ()=> {
-        const mapper = jest.fn();
-        const result = problem.mapEach(mapper);
 
         test('mapper is not called', ()=> {            
             expect(mapper).not.toHaveBeenCalled();
@@ -384,61 +332,6 @@ describe('Something', ()=> {
         test('returns the something', ()=> {
             const handler = jest.fn();
             expect(something.catch(handler)).toBe(something);
-        });
-    });
-
-    describe('forEach', ()=> {
-        describe('when wrapped value is not array', ()=> {
-            const fn = jest.fn();
-            fn.mockImplementation((input: number) => input + 1);
-            const result = something.forEach(fn);
-
-            test('fn is called with inner value', ()=> {
-                expect(fn).toHaveBeenCalledWith(123);
-            });
-
-            test('ignores fn return value', ()=> {
-                expect(result.unwrap()).toBe(123);
-            });
-
-            test('returns same something', ()=> {
-                expect(result).toBe(something);
-            });
-        });
-
-        describe('when wrapped value is array', ()=> {
-            const fn = jest.fn();
-            fn.mockImplementation(double);
-            const result = manyThings.forEach(fn);
-
-            test('fn is called with each array value', ()=> {
-                expect(fn).toHaveBeenCalledTimes(3);
-                expect(fn.mock.calls).toEqual([
-                    [1], 
-                    [2], 
-                    [3]
-                ]);
-            });
-
-            test('ignores fn return value', ()=> {
-                expect(result.unwrap()).toEqual([1, 2, 3]);
-            });
-
-            test('returns same something', ()=> {
-                expect(result).toBe(manyThings);
-            });
-        });
-
-        describe('when fn throws error', ()=> {
-            test('if wrapped value not array, returns Problem', ()=> {
-                const result = something.forEach(explode);
-                expect(result).toBeInstanceOf(Problem);
-            });
-
-            test('if wrapped value is array, returns first Problem created', ()=> {
-                const result = manyThings.forEach(explode);
-                expect(result).toBeInstanceOf(Problem);
-            });
         });
     });
 
@@ -542,102 +435,6 @@ describe('Something', ()=> {
             expect(mapper.mock.calls[0]).toEqual([
                 [1, 2, 3]
             ]);
-        });
-    });
-
-    describe('mapEach', ()=> {
-        describe('when wrapped value is array', ()=> {
-            const start = Perhaps.of([1, 2, 3]);
-
-            test('passes each array item to mapper', ()=> {
-                const mapper = jest.fn();
-                start.mapEach(mapper);
-                expect(mapper.mock.calls).toEqual([
-                    [1],
-                    [2],
-                    [3]
-                ]);
-            });
-
-            test('if mappers return nonempty values NV, mapEach returns Something wrapping array<NV>', ()=> {
-                const end = start.mapEach(double);
-                expect(end.unwrap()).toEqual([2, 4, 6]);
-            });
-
-            test('if mappers return mix of empty and nonempty values EV and NV, mapEach returns Somethign wrapping filtered array<NV>', ()=> {
-                const onlyEvens = (input: number) => {
-                    const isEven = input % 2 === 0;
-                    return isEven ? input : null;
-                };
-                const end = start.mapEach(onlyEvens);
-                expect(end.unwrap()).toEqual([2]);
-            });
-
-            test('if mappers return only empty values, mapEach returns Nothing', ()=> {
-                const end = start.mapEach(getNull);
-                expect(end).toBe(Nothing);
-            });
-
-            test('if any mapper throws exception, mapEach returns Problem', ()=> {
-                const end = start.mapEach(explode);
-                expect(end).toBeInstanceOf(Problem);
-            });
-
-            test('if any mapper returns Problem, mapEach returns that', ()=> {
-                const end = start.mapEach(getProblem);
-                expect(end).toBeInstanceOf(Problem);
-            });
-
-            test('if any mapper returns a Nothing, it is treated like a nonempty value, as specified above', ()=> {
-                const end = start.mapEach(getNothing);
-                expect(end).toBe(Nothing);
-            });
-        });
-
-        describe('when wrapped value is not array', ()=> {
-            const start = Perhaps.of(1);
-        
-            test('mapper is passed value', ()=> {
-                const mapper = jest.fn();
-                start.mapEach(mapper);
-                expect(mapper).toHaveBeenCalled();
-                expect(mapper.mock.calls).toEqual([
-                    [1]
-                ]);
-            });
-
-            test('if mapper returns value, map returns Something wrapping value', ()=> {
-                const end = start.mapEach(double);
-                expect(end).toBeInstanceOf(Something);
-                expect(end.unwrap()).toBe(2);
-            });
-
-            test('if mapper throws error, map returns Problem', ()=> {
-                const end = start.mapEach(explode);
-                expect(end).toBeInstanceOf(Problem);
-            });
-
-            test('if mapper returns empty value, map returns Nothing', ()=> {
-                const end = start.mapEach(getNull);
-                expect(end).toBe(Nothing);
-            });
-
-            test('if mapper returns Nothing, map returns it', ()=> {
-                const end = start.mapEach(getNothing);
-                expect(end).toBe(Nothing);
-            });
-
-            test('if mapper returns Problem, map returns it', ()=> {
-                const end = start.mapEach(getProblem);
-                expect(end).toBeInstanceOf(Problem);
-            });
-
-            test('if mapper returns Something, map returns it', ()=> {
-                const somethingElse = new Something(4);
-                const getSomethingElse = ()=> somethingElse;
-                const end = start.mapEach(getSomethingElse);
-                expect(end).toBe(somethingElse);
-            });
         });
     });
 
