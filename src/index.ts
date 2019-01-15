@@ -23,6 +23,15 @@ export abstract class Perhaps<T> {
 
     abstract unwrapOrThrow(err: Error): T | never
 
+    static from<U>(fn: ()=> U): Perhaps<U> {
+        try {
+            const value = fn();
+            return Perhaps.of(value);
+        } catch (err) {
+            return new Problem(err);
+        }
+    }
+
     static junction<U>(...args: Array<Perhaps<U>|Function>): Perhaps<U> {
         const join = args.pop() as Function;
         const maybes = args as Array<Perhaps<U>>;
@@ -68,15 +77,6 @@ export abstract class Perhaps<T> {
 
         } else {
             return new Something<U>(input as U);
-        }
-    }
-
-    static from<U>(fn: ()=> U): Perhaps<U> {
-        try {
-            const value = fn();
-            return Perhaps.of(value);
-        } catch (err) {
-            return new Problem(err);
         }
     }
 };
@@ -270,6 +270,8 @@ export class Something<T> implements Perhaps<T> {
             return this.map(mapper);
         }
     }
+
+
 
     public or = (alt: any)=> this;
 

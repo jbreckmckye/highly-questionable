@@ -63,6 +63,10 @@ describe('Perhaps', ()=> {
         });
     });
 
+    describe('Perhaps.unwrapAll', ()=> {
+        test('given an array of plain values, spits them back out')
+    });
+
     describe('Perhaps.junction', ()=> {
         const one = Perhaps.of(1);
         const two = Perhaps.of(2);
