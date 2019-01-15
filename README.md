@@ -86,10 +86,6 @@ TypeScript should work out of the box.
 
 See [API.md](API.md).
 
-## Examples / recipes
-
-See [EXAMPLES.md](EXAMPLES.md).
-
 ## Due dilligence
 
 ### License
@@ -102,7 +98,7 @@ This project has no production dependencies.
 
 ### Library size
 
-(to calculate)
+At v1.0.3, the whole library minified and gzipped amounted to 1231 bytes.
 
 ## Contributing / developing
 

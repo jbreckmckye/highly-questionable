@@ -1,21 +1,28 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const predicateFalse = () => false;
-const predicateTrue = () => true;
 class Perhaps {
+    static from(fn) {
+        try {
+            const value = fn();
+            return Perhaps.of(value);
+        }
+        catch (err) {
+            return new Problem(err);
+        }
+    }
     static junction(...args) {
         const join = args.pop();
         const maybes = args;
         const joinInputs = [];
         for (let i = 0; i < maybes.length; i++) {
             const maybe = maybes[i];
-            if (maybe.isSomething()) {
+            if (maybe instanceof Something) {
                 joinInputs.push(maybe.unwrap());
             }
-            else if (maybe.isProblem()) {
+            else if (maybe instanceof Problem) {
                 return maybe;
             }
-            else if (maybe.isNothing()) {
+            else if (maybe instanceof None) {
                 return maybe;
             }
             else {
@@ -27,7 +34,7 @@ class Perhaps {
             return Perhaps.of(result);
         }
         catch (err) {
-            return Problem.of(err);
+            return new Problem(err);
         }
     }
     static of(input) {
@@ -47,15 +54,6 @@ class Perhaps {
             return new Something(input);
         }
     }
-    static from(fn) {
-        try {
-            const value = fn();
-            return Perhaps.of(value);
-        }
-        catch (err) {
-            return Problem.of(err);
-        }
-    }
 }
 exports.Perhaps = Perhaps;
 ;
@@ -64,12 +62,10 @@ class None extends Perhaps {
         super(...arguments);
         this.catch = (fn) => exports.Nothing;
         this.forEach = (fn) => exports.Nothing;
-        this.ifExists = (fn) => exports.Nothing;
-        this.isNothing = predicateTrue;
-        this.isProblem = predicateFalse;
-        this.isSomething = predicateFalse;
+        this.forOne = (fn) => exports.Nothing;
         this.map = (fn) => exports.Nothing;
         this.mapEach = (fn) => exports.Nothing;
+        this.mapEachFlat = (fn) => exports.Nothing;
         this.peek = () => null;
         this.unwrap = () => null;
     }
@@ -93,12 +89,10 @@ exports.Nothing = new None();
 class Problem {
     constructor(err) {
         this.forEach = (fn) => this;
-        this.ifExists = (fn) => this;
-        this.isNothing = predicateFalse;
-        this.isProblem = predicateTrue;
-        this.isSomething = predicateFalse;
+        this.forOne = (fn) => this;
         this.map = (fn) => this;
         this.mapEach = (fn) => this;
+        this.mapEachFlat = (fn) => this;
         this.err = err;
     }
     static of(err) {
@@ -133,9 +127,6 @@ exports.Problem = Problem;
 class Something {
     constructor(input) {
         this.catch = (fn) => this;
-        this.isNothing = predicateFalse;
-        this.isProblem = predicateFalse;
-        this.isSomething = predicateTrue;
         this.mapEach = (mapper) => {
             if (Array.isArray(this.value)) {
                 const results = [];
@@ -159,7 +150,7 @@ class Something {
                         }
                     }
                     catch (err) {
-                        return Problem.of(err);
+                        return new Problem(err);
                     }
                 }
                 if (results.length) {
@@ -180,6 +171,17 @@ class Something {
         this.unwrapOr = (alt) => this.value;
         this.value = input;
     }
+    static of(input) {
+        return new Something(input);
+    }
+    static from(fn) {
+        try {
+            return new Something(fn());
+        }
+        catch (err) {
+            return new Problem(err);
+        }
+    }
     forEach(fn) {
         if (Array.isArray(this.value)) {
             for (let i = 0; i < this.value.length; i++) {
@@ -187,7 +189,7 @@ class Something {
                     fn(this.value[i]);
                 }
                 catch (err) {
-                    return Problem.of(err);
+                    return new Problem(err);
                 }
             }
         }
@@ -196,18 +198,18 @@ class Something {
                 fn(this.value);
             }
             catch (err) {
-                return Problem.of(err);
+                return new Problem(err);
             }
         }
         return this;
     }
-    ifExists(fn) {
+    forOne(fn) {
         try {
             fn(this.value);
             return this;
         }
         catch (err) {
-            return Problem.of(err);
+            return new Problem(err);
         }
     }
     map(mapper) {
@@ -216,7 +218,7 @@ class Something {
             return Perhaps.of(result);
         }
         catch (err) {
-            return Problem.of(err);
+            return new Problem(err);
         }
     }
     unwrapOrThrow() {

@@ -9,8 +9,6 @@ export abstract class Perhaps<T> {
 
     abstract mapEach<U>(mapper: (input: any) => U | Perhaps<U>): Perhaps<Array<U>|U>
 
-    //abstract mapEachFlat<U>(mapper: (input: any) => Array<U> | Array<Perhaps<U>>): Perhaps<Array<U>>
-
     abstract or(alt: T): Perhaps<T>
 
     abstract orFrom(fn: ()=> T | never): Perhaps<T>
