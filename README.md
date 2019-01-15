@@ -2,13 +2,13 @@
 
 A TypeScript / JavaScript library for paranoid developers.
 
-Highly Questionable allows you to safely and elegantly handle values that might be null, undefined or Errors, without writing tedious null checks and try-catches everywhere.
+Highly Questionable allows you to safely and elegantly handle values that might be null, undefined or Errors, without writing tedious null checks and try-catches everywhere. It is loosely based on the `Option`, `Maybe` and `Result` monads from other languages.
 
-It is loosely based on the `Option`, `Maybe` and `Result` monads from other languages. You could also think of it as like a synchronous `Promise`.
+Think of it like a synchronous `Promise`, with `map/catch` methods equivalent to `then/catch`. 'Map' won't be called if the value doesn't exist, and you can handle errors with `catch`.
 
 ## Concept
 
-Values are wrapped in a `Perhaps` object. When you want to use the value, you pass perhaps 'mapping' functions that are only run if the value is valid. The output of the 'mapping' gets wrapped in another `Perhaps`, and so on, so forth, like so:
+Values are wrapped in a `Perhaps` object. When you want to use the value, you pass perhaps 'mapping' functions that are only run if the value is valid. The output of the 'mapping' gets wrapped in a new `Perhaps`, and so on, so forth, like so:
 
 ```typescript
 const userName = Perhaps.of(userJSON)
@@ -40,6 +40,23 @@ if (userName !== Nothing) {
 
 print(userName.unwrapOr('Anonymous'));
 ```
+
+You can also catch exceptions at your leisure:
+
+```typescript
+userName.catch(err => {
+    logException(err);
+    return 'Anonymous'; //  can pass a default to use
+});
+```
+
+And throw exceptions when values don't exist:
+
+```typescript
+userName.unwrapOrThrow(new Error('Could not retrieve user name'));
+```
+
+Note that every `Perhaps` object is immutable: mapping one will create a new instance, unless the output is Nothing (which is a singleton, as all Nothings are the same).
 
 For more details, consult the [API docs](API.md).
 
@@ -77,12 +94,21 @@ See [EXAMPLES.md](EXAMPLES.md).
 
 ### License
 
-This library is provided under an [TO FILL] license. This means... .
+This library is provided under an Apache 2.0 license. For more details, see [LICENSE.md];
 
-For more details, see [LICENSE.md];
+### Dependencies
+
+This project has no production dependencies.
 
 ### Library size
 
 (to calculate)
 
 ## Contributing / developing
+
+1. Check out the code and install Node
+2. Use `npm install` to install project dependencies
+3. Write your TypeScript
+4. Test with `npm test`
+5. Build the bundle with `npm run build`
+6. Raise a pull request

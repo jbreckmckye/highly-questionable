@@ -9,6 +9,8 @@ export abstract class Perhaps<T> {
 
     abstract mapEach<U>(mapper: (input: any) => U | Perhaps<U>): Perhaps<Array<U>|U>
 
+    //abstract mapEachFlat<U>(mapper: (input: any) => Array<U> | Array<Perhaps<U>>): Perhaps<Array<U>>
+
     abstract or(alt: T): Perhaps<T>
 
     abstract orFrom(fn: ()=> T | never): Perhaps<T>
@@ -94,6 +96,8 @@ export class None extends Perhaps<null> {
 
     public mapEach = (fn: any): None => Nothing;
 
+    public mapEachFlat = (fn: any): None => Nothing;
+
     public or<U>(alt: U): Perhaps<U> {
         return Perhaps.of(alt);
     }
@@ -136,13 +140,15 @@ export class Problem implements Perhaps<any> {
         return Perhaps.from(()=> handler(this.err));
     }
 
-    public forEach = (fn: any) => this;
+    public forEach = (fn: any): Problem => this;
 
-    public forOne = (fn: any) => this;
+    public forOne = (fn: any): Problem => this;
 
-    public map = (fn: any) => this;
+    public map = (fn: any): Problem => this;
 
-    public mapEach = (fn: any) => this;
+    public mapEach = (fn: any): Problem => this;
+
+    public mapEachFlat = (fn: any): Problem => this;
 
     public or<U>(alt: U): Perhaps<U> {
         return Perhaps.of(alt);
