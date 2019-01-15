@@ -100,7 +100,7 @@ This project has no production dependencies.
 
 ### Library size
 
-At v1.0.4, the whole library minified and gzipped amounted to 1018 bytes.
+At v1.1, the whole library minified and gzipped amounted to 1018 bytes.
 
 ## Contributing / developing
 
