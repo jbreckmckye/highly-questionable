@@ -21,6 +21,8 @@
       // Allow ES2015-style default imports from files with no explicit export-default
       "allowSyntheticDefaultImports": true,
       "esModuleInterop": true,
+
+      "declaration": true
     },
     "include": ["src/*", "types/*"],
     "exclude": ["node_modules"]
